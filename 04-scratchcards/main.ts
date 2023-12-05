@@ -2,33 +2,29 @@ const input = await Bun.file('input.txt').text()
 
 const cards = input.split('\n').map(parseCard)
 
-{
-	const pointCount = cards
-		.map(getWinCount)
-		.map(getPointCount)
-		.reduce((sum, c) => sum + c, 0)
+const pointCount = cards
+	.map(getWinCount)
+	.map(getPointCount)
+	.reduce((sum, c) => sum + c, 0)
 
-	console.log(`Total points: ${pointCount}`)
-}
+console.log(`Total points: ${pointCount}`)
 
-{
-	const cardMap = new Map(cards.map((card) => [card.number, 1]))
+const cardCounts = cards.map(() => 1)
 
-	cards.forEach((card) => {
-		const startIndex = card.number + 1
-		const winCount = getWinCount(card)
-		const winningCards = cards.slice(startIndex, startIndex + winCount)
-		const count = cardMap.get(card.number) || 0
-		const newCards = Array.from({ length: count }).flatMap(() => winningCards)
-		newCards.forEach((newCard) => {
-			cardMap.set(newCard.number, (cardMap.get(newCard.number) || 0) + 1)
-		})
+cards.forEach((card) => {
+	const startIndex = card.number + 1
+	const winCount = getWinCount(card)
+	const winningCards = cards.slice(startIndex, startIndex + winCount)
+	const count = cardCounts.at(card.number) || 0
+	const newCards = Array.from({ length: count }).flatMap(() => winningCards)
+	newCards.forEach((newCard) => {
+		cardCounts[newCard.number] = (cardCounts[newCard.number] || 0) + 1
 	})
+})
 
-	const cardCount = Array.from(cardMap.values()).reduce((sum, c) => sum + c, 0)
+const cardCount = cardCounts.reduce((sum, c) => sum + c, 0)
 
-	console.log(`Total scratchcards: ${cardCount}`)
-}
+console.log(`Total scratchcards: ${cardCount}`)
 
 type Card = {
 	number: number
