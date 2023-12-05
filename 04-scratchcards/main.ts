@@ -1,19 +1,18 @@
 const input = await Bun.file('input.txt').text()
 
-const cards = input.split('\n').map(parseCard)
+const winCounts = input.split('\n').map(parseWinCount)
 
-const pointCount = cards
-	.map(getWinCount)
-	.map(getPointCount)
+const pointCount = winCounts
+	.map((c) => (c < 2 ? c : Math.pow(2, c - 1)))
 	.reduce((sum, c) => sum + c, 0)
 
 console.log(`Total points: ${pointCount}`)
 
-const cardCounts = cards.map(() => 1)
+const cardCounts = winCounts.map(() => 1)
 
-cards.forEach((card, cardIndex) => {
+winCounts.forEach((winCount, cardIndex) => {
 	let index = cardIndex + 1
-	const endIndex = index + getWinCount(card)
+	const endIndex = index + winCount
 	while (index < endIndex) {
 		cardCounts[index] += cardCounts[cardIndex]
 		index++
@@ -24,28 +23,11 @@ const cardCount = cardCounts.reduce((sum, c) => sum + c, 0)
 
 console.log(`Total scratchcards: ${cardCount}`)
 
-type Card = {
-	winning: number[]
-	drawn: number[]
-}
-
-function parseCard(rawCard: string): Card {
-	const [rawWinning, rawDrawn] = rawCard.split(': ').at(-1)?.split(' | ') || []
-	return {
-		winning: parseNums(rawWinning),
-		drawn: parseNums(rawDrawn),
-	}
+function parseWinCount(rawCard: string): number {
+	const [winning, drawn] = rawCard.split(': ').at(-1)?.split(' | ') || []
+	return parseNums(drawn).filter((n) => parseNums(winning).includes(n)).length
 }
 
 function parseNums(rawNums: string): number[] {
 	return rawNums.replaceAll('  ', ' ').split(' ').filter(Boolean).map(Number)
-}
-
-function getWinCount(card: Card): number {
-	return Array.from(card.drawn).filter((num) => card.winning.includes(num))
-		.length
-}
-
-function getPointCount(winCount: number): number {
-	return winCount < 2 ? winCount : Math.pow(2, winCount - 1)
 }
