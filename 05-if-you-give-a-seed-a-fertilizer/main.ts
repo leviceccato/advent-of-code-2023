@@ -6,19 +6,30 @@ const seeds = rawSeeds.split(': ').at(-1)?.split(' ').map(Number) || []
 
 const maps = rawMaps.map(parseMap)
 
-seeds.forEach((seed) => {})
+const lowestLocation = seeds.reduce((previousValue, value) => {
+	const location = maps.reduce((r, map, i) => map(r), value)
+	return location < previousValue ? location : previousValue
+}, Infinity)
 
-function parseMap(rawMap: string): Map<number, number> {
+console.log(`Lowest location: ${lowestLocation}`)
+
+function parseMap(rawMap: string): (_: number) => number {
 	const [_, ...rawEntries] = rawMap.split('\n')
-	const map = new Map<number, number>()
-	rawEntries
-		.map((rawEntry) => rawEntry.split(' '))
-		.forEach((rawEntry) => {
-			const [destRangeStart, sourceRangeStart, rangeLength] =
-				rawEntry.map(Number)
-			Array.from({ length: rangeLength }).forEach((_, index) => {
-				map.set(sourceRangeStart + index, destRangeStart + index)
-			})
-		})
-	return map
+	const entries = rawEntries.map((rawEntry) => {
+		const [destStart, sourceStart, length] = rawEntry.split(' ').map(Number)
+		return (previous: number) =>
+			previous < sourceStart || previous > sourceStart + length - 1
+				? previous
+				: destStart + (previous - sourceStart)
+	})
+	return (value: number) => {
+		let result = value
+		for (const entry of entries) {
+			result = entry(result)
+			if (result !== value) {
+				break
+			}
+		}
+		return result
+	}
 }
