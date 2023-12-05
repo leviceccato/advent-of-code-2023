@@ -6,8 +6,6 @@ const pointCount = winCounts
 	.map((c) => (c < 2 ? c : Math.pow(2, c - 1)))
 	.reduce((sum, c) => sum + c, 0)
 
-console.log(`Total points: ${pointCount}`)
-
 const cardCounts = winCounts.map(() => 1)
 
 winCounts.forEach((winCount, cardIndex) => {
@@ -21,7 +19,8 @@ winCounts.forEach((winCount, cardIndex) => {
 
 const cardCount = cardCounts.reduce((sum, c) => sum + c, 0)
 
-console.log(`Total scratchcards: ${cardCount}`)
+console.log(`Total points: ${pointCount}
+Total scratchcards: ${cardCount}`)
 
 function parseWinCount(rawCard: string): number {
 	const [winning, drawn] = rawCard.split(': ').at(-1)?.split(' | ') || []
