@@ -1,0 +1,7 @@
+# OS
+Icon
+Thumbs.db
+.DS_Store
+
+# Packages
+node_modules
