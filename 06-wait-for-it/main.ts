@@ -1,16 +1,18 @@
 const input = await Bun.file('input.txt').text()
 
-const [times, distances] = input
+const [rawTimes, rawDistances] = input
 	.split('\n')
 	.map((l) => l.match(/\d+/g)?.map(String) || [])
 
-const pressDurationProduct = times.map(Number).reduce((result, time, index) => {
-	return result * getPressDurationCount(time, Number(distances[index]))
-}, 1)
+const pressDurationProduct = rawTimes
+	.map(Number)
+	.reduce((result, time, index) => {
+		return result * getPressDurationCount(time, Number(rawDistances[index]))
+	}, 1)
 
 const pressDurations = getPressDurationCount(
-	Number(times.join('')),
-	Number(distances.join('')),
+	Number(rawTimes.join('')),
+	Number(rawDistances.join('')),
 )
 
 console.log(`Product of possible button press durations: ${pressDurationProduct}
