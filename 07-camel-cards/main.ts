@@ -8,14 +8,18 @@ const cardStrengthMap1 = new Map([
 	['T', 10],
 ])
 
-const bets1 = input.split('\n').map((l) => parseBet(l, cardStrengthMap1, null))
+const bets1 = input
+	.split('\n')
+	.map((rawBet) => parseBet(rawBet, cardStrengthMap1, null))
 
 const winnings1 = betsToWinnings(bets1)
 
 const cardStrengthMap2 = new Map(cardStrengthMap1)
 cardStrengthMap2.set('J', 1)
 
-const bets2 = input.split('\n').map((l) => parseBet(l, cardStrengthMap2, 1))
+const bets2 = input
+	.split('\n')
+	.map((rawBet) => parseBet(rawBet, cardStrengthMap2, 1))
 
 const winnings2 = betsToWinnings(bets2)
 
@@ -37,22 +41,19 @@ function parseBet(
 
 	const cards = rawHand
 		.split('')
-		.map((c) => cardStrengthMap.get(c) ?? Number(c))
+		.map((rawCard) => cardStrengthMap.get(rawCard) ?? Number(rawCard))
 	const bet = {
 		bid: Number(rawBid),
 		strength: 1,
 		cards,
 	}
 
-	const cardToCount = new Map(cards.map((c) => [c, 0]))
+	const countMap = new Map<number, number>()
 	cards.forEach((card) => {
-		const count = cardToCount.get(card)
-		if (count !== undefined) {
-			cardToCount.set(card, count + 1)
-		}
+		countMap.set(card, (countMap.get(card) || 0) + 1)
 	})
 
-	const counts = [...cardToCount.values()]
+	const counts = [...countMap.values()]
 	const countsIncludes2 = counts.includes(2)
 	const countsIncludes3 = counts.includes(3)
 
@@ -74,7 +75,7 @@ function parseBet(
 		return bet
 	}
 
-	const wildcardCount = cards.filter((c) => c === wildcard).length
+	const wildcardCount = cards.filter((card) => card === wildcard).length
 
 	if (
 		(bet.strength === 6 && (wildcardCount === 1 || wildcardCount === 4)) ||
@@ -106,9 +107,7 @@ function betsToWinnings(unsortedBets: Bet[]): number {
 		let order = bet1.strength - bet2.strength
 		let cardIndex = 0
 		while (order === 0) {
-			const card1 = bet1.cards[cardIndex]
-			const card2 = bet2.cards[cardIndex]
-			order = card1 - card2
+			order = bet1.cards[cardIndex] - bet2.cards[cardIndex]
 			cardIndex++
 		}
 		return order
