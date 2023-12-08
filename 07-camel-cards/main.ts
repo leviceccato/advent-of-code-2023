@@ -1,5 +1,7 @@
 const input = await Bun.file('input.txt').text()
 
+const rawBets = input.split('\n')
+
 const cardStrengthMap1 = new Map([
 	['A', 14],
 	['K', 13],
@@ -8,18 +10,13 @@ const cardStrengthMap1 = new Map([
 	['T', 10],
 ])
 
-const bets1 = input
-	.split('\n')
-	.map((rawBet) => parseBet(rawBet, cardStrengthMap1, null))
+const bets1 = rawBets.map((rawBet) => parseBet(rawBet, cardStrengthMap1, null))
 
 const winnings1 = betsToWinnings(bets1)
 
-const cardStrengthMap2 = new Map(cardStrengthMap1)
-cardStrengthMap2.set('J', 1)
+const cardStrengthMap2 = new Map([...cardStrengthMap1.entries(), ['J', 1]])
 
-const bets2 = input
-	.split('\n')
-	.map((rawBet) => parseBet(rawBet, cardStrengthMap2, 1))
+const bets2 = rawBets.map((rawBet) => parseBet(rawBet, cardStrengthMap2, 1))
 
 const winnings2 = betsToWinnings(bets2)
 
