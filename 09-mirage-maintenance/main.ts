@@ -1,14 +1,22 @@
 const input = await Bun.file('input.txt').text()
 
-const sequences = input
+const differenceGroups = input
 	.split('\n')
 	.map((rawSequence) => rawSequence.split(' ').map(Number))
+	.map(reduceDifferences)
 
-const nextStepSum = sequences.reduce((sum, sequence) => {
-	return sum + predictNextStep(sequence)
-}, 0)
+const nextStepSum = differenceGroups.reduce(
+	(sum, differences) => sum + predictNextStep(differences),
+	0,
+)
 
-console.log(`Sum of next steps: ${nextStepSum}`)
+const previousStepSum = differenceGroups.reduce(
+	(sum, differences) => sum + predictPreviousStep(differences),
+	0,
+)
+
+console.log(`Sum of next steps: ${nextStepSum}
+Sum of previous steps: ${previousStepSum}`)
 
 function sequenceDifferences(steps: number[]): number[] {
 	const differences: number[] = []
@@ -18,17 +26,28 @@ function sequenceDifferences(steps: number[]): number[] {
 	return differences
 }
 
-function predictNextStep(steps: number[]): number {
+function reduceDifferences(steps: number[]): number[][] {
 	const sequences = [steps]
 	while (true) {
 		const sequence = sequenceDifferences(sequences[0])
-		if (sequences[0].every((step) => step === 0)) {
+		if (sequence.every((step) => step === 0)) {
 			break
 		}
 		sequences.unshift(sequence)
 	}
-	return sequences.reduce((previous, sequence) => {
+	return sequences
+}
+
+function predictNextStep(differences: number[][]): number {
+	return differences.reduce((previous, sequence) => {
 		const lastStep = sequence[sequence.length - 1]
-		return previous + lastStep
+		return lastStep + previous
+	}, 0)
+}
+
+function predictPreviousStep(differences: number[][]): number {
+	return differences.reduce((previous, sequence) => {
+		const lastStep = sequence[0]
+		return lastStep - previous
 	}, 0)
 }
