@@ -4,23 +4,31 @@ const [instructions, rawNetwork] = input.split('\n\n')
 
 const network = parseNetwork(rawNetwork)
 
-let currentNodeName = 'AAA'
-let stepCount = 0
-while (currentNodeName !== 'ZZZ') {
-	const currentNode = network.get(currentNodeName)
-	if (currentNode === undefined) {
-		break
-	}
-	const instruction = instructions[stepCount % instructions.length]
-	if (instruction === 'L') {
-		currentNodeName = currentNode.left
-	} else if (instruction === 'R') {
-		currentNodeName = currentNode.right
-	}
-	stepCount++
-}
+const stepCount1 = getStepCount(
+	'AAA',
+	instructions,
+	network,
+	(nodeName) => nodeName !== 'ZZZ',
+)
 
-console.log(`Total steps required: ${stepCount}`)
+const stepCounts: number[] = []
+for (const [nodeName] of network) {
+	if (!nodeName.endsWith('A')) {
+		continue
+	}
+	stepCounts.push(
+		getStepCount(
+			nodeName,
+			instructions,
+			network,
+			(nodeName) => !nodeName.endsWith('Z'),
+		),
+	)
+}
+const stepCount2 = leastCommonMultiple(stepCounts)
+
+console.log(`Total steps required: ${stepCount1}
+Total steps required adjusted: ${stepCount2}`)
 
 type Network = Map<string, { left: string; right: string }>
 
@@ -32,4 +40,41 @@ function parseNetwork(rawNetwork: string): Network {
 		network.set(node, { left, right })
 	})
 	return network
+}
+
+function getStepCount(
+	nodeName: string,
+	instructions: string,
+	network: Network,
+	whileFunc: (n: string) => boolean,
+): number {
+	let stepCount = 0
+	while (whileFunc(nodeName)) {
+		const currentNode = network.get(nodeName)
+		if (currentNode === undefined) {
+			break
+		}
+		const instruction = instructions[stepCount % instructions.length]
+		if (instruction === 'L') {
+			nodeName = currentNode.left
+		} else if (instruction === 'R') {
+			nodeName = currentNode.right
+		}
+		stepCount++
+	}
+	return stepCount
+}
+
+function greatestCommonDivisor(number1: number, number2: number): number {
+	if (!number2) {
+		return number1
+	}
+	return greatestCommonDivisor(number2, number1 % number2)
+}
+
+function leastCommonMultiple(numbers: number[]): number {
+	return numbers.reduce(
+		(previousNumber, number) =>
+			(previousNumber * number) / greatestCommonDivisor(previousNumber, number),
+	)
 }
