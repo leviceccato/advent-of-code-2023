@@ -1,64 +1,70 @@
 const input = await Bun.file('input.txt').text()
 
-class Grid {
+const grid = parseGrid(input)
+
+const loop = getLoop(grid)
+
+const farthestPointStepCount = loop.length / 2
+
+console.log(`Steps to get to farthest point: ${farthestPointStepCount}`)
+
+type Grid = {
 	tiles: string[]
 	width: number
 	start: number
+}
 
-	constructor(rawGrid: string) {
-		const tiles = rawGrid.split('')
-
-		this.tiles = tiles
-		this.width = 1 + tiles.findIndex((tile) => tile === '\n')
-		this.start = tiles.findIndex((tile) => tile === 'S')
-	}
-
-	getAdjoiningTileIndexes(index: number): number[] {
-		const top = index - this.width
-		const bottom = index + this.width
-		const left = index - 1
-		const right = index + 1
-
-		switch (this.tiles[index]) {
-			case '|':
-				return [top, bottom]
-			case '-':
-				return [left, right]
-			case 'L':
-				return [top, right]
-			case 'J':
-				return [left, top]
-			case '7':
-				return [left, bottom]
-			case 'F':
-				return [right, bottom]
-			// Assume 'S'
-			default:
-				const adjoiningIndexes: number[] = []
-				;[top, right, bottom, left].forEach((adjacentIndex) => {
-					if (this.getAdjoiningTileIndexes(adjacentIndex).includes(index)) {
-						adjoiningIndexes.push(adjacentIndex)
-					}
-				})
-				return adjoiningIndexes
-		}
-	}
-
-	get loop(): number[] {
-		const indexes = [this.start]
-
-		while (this.tiles[indexes[0]] !== 'S' || indexes.length === 1) {
-			const adjoiningIndexes = this.getAdjoiningTileIndexes(indexes[0])
-			adjoiningIndexes.forEach((index) => {
-				if (index !== indexes[0]) {
-					indexes.unshift(index)
-					console.log(index)
-				}
-			})
-		}
-
-		return indexes
+function parseGrid(rawGrid: string): Grid {
+	const tiles = rawGrid.split('')
+	return {
+		tiles,
+		width: 1 + tiles.findIndex((tile) => tile === '\n'),
+		start: tiles.findIndex((tile) => tile === 'S'),
 	}
 }
 
-console.log(new Grid(input).loop)
+function getAdjoiningTileIndexes(grid: Grid, index: number): number[] {
+	const top = index - grid.width
+	const bottom = index + grid.width
+	const left = index - 1
+	const right = index + 1
+
+	switch (grid.tiles[index]) {
+		case '|':
+			return [top, bottom]
+		case '-':
+			return [left, right]
+		case 'L':
+			return [top, right]
+		case 'J':
+			return [left, top]
+		case '7':
+			return [left, bottom]
+		case 'F':
+			return [right, bottom]
+		case 'S':
+			const adjoiningIndexes: number[] = []
+			;[top, right, bottom, left].forEach((adjacentIndex) => {
+				if (getAdjoiningTileIndexes(grid, adjacentIndex).includes(index)) {
+					adjoiningIndexes.push(adjacentIndex)
+				}
+			})
+			return adjoiningIndexes
+		default:
+			return []
+	}
+}
+
+function getLoop(grid: Grid): number[] {
+	const indexes = new Set<number>()
+	let lastIndex: number | undefined = grid.start
+
+	while (lastIndex !== undefined) {
+		indexes.add(lastIndex)
+		lastIndex = getAdjoiningTileIndexes(grid, lastIndex).find(
+			(adjoiningIndex) => !indexes.has(adjoiningIndex),
+		)
+	}
+
+	return Array.from(indexes)
+}
