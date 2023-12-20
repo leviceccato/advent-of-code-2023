@@ -43,13 +43,9 @@ function getAdjoiningTileIndexes(grid: Grid, index: number): number[] {
 		case 'F':
 			return [right, bottom]
 		case 'S':
-			const adjoiningIndexes: number[] = []
-			;[top, right, bottom, left].forEach((adjacentIndex) => {
-				if (getAdjoiningTileIndexes(grid, adjacentIndex).includes(index)) {
-					adjoiningIndexes.push(adjacentIndex)
-				}
+			return [top, right, bottom, left].filter((adjacentIndex) => {
+				return getAdjoiningTileIndexes(grid, adjacentIndex).includes(index)
 			})
-			return adjoiningIndexes
 		default:
 			return []
 	}
