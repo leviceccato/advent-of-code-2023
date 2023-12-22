@@ -10,7 +10,7 @@ const directionToTileMap: Record<string, string> = {
 }
 
 const tileToDirectionMap = Object.fromEntries(
-	Object.entries(directionToTileMap).map(([k, v]) => [v, k]),
+	Object.entries(directionToTileMap).map(([k, v]) => [v, k.split('-')]),
 )
 
 const grid = parseGrid(input)
@@ -85,9 +85,7 @@ function getAdjoiningTileIndexes(grid: Grid, index: number): number[] {
 	}
 
 	return (
-		tileToDirectionMap[tile]
-			?.split('-')
-			.map((rawDirection) => indexes[rawDirection]) || []
+		tileToDirectionMap[tile]?.map((rawDirection) => indexes[rawDirection]) || []
 	)
 }
 
