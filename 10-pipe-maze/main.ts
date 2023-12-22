@@ -1,66 +1,119 @@
 const input = await Bun.file('input.txt').text()
 
+const directionToTileMap: Record<string, string> = {
+	'bottom-top': '|',
+	'left-right': '-',
+	'right-top': 'L',
+	'left-top': 'J',
+	'bottom-left': '7',
+	'bottom-right': 'F',
+}
+
+const tileToDirectionMap = Object.fromEntries(
+	Object.entries(directionToTileMap).map(([k, v]) => [v, k]),
+)
+
 const grid = parseGrid(input)
 
-const loop = getLoop(grid)
+const farthestPointStepCount = grid.loop.size / 2
 
-const farthestPointStepCount = loop.length / 2
+const innerTileCount = getInnerTileIndexes(grid).length
 
-console.log(`Steps to get to farthest point: ${farthestPointStepCount}`)
+console.log(`Steps to get to farthest point: ${farthestPointStepCount}
+Inner tile count: ${innerTileCount}`)
 
 type Grid = {
 	tiles: string[]
 	width: number
-	start: number
+	startIndex: number
+	loop: Set<number>
 }
 
 function parseGrid(rawGrid: string): Grid {
 	const tiles = rawGrid.split('')
-	return {
+	const grid = {
 		tiles,
 		width: 1 + tiles.findIndex((tile) => tile === '\n'),
-		start: tiles.findIndex((tile) => tile === 'S'),
+		startIndex: tiles.findIndex((tile) => tile === 'S'),
+		loop: new Set<number>(),
+	}
+
+	let index: number | undefined = grid.startIndex
+	while (index !== undefined) {
+		grid.loop.add(index)
+		index = getAdjoiningTileIndexes(grid, index).find(
+			(adjoiningIndex) => !grid.loop.has(adjoiningIndex),
+		)
+	}
+
+	const loop = Array.from(grid.loop)
+	const startDirections = Object.entries(
+		getAdjacentIndexes(grid.width, grid.startIndex),
+	)
+		.filter(
+			([_, index]) => index === loop[1] || index === loop[loop.length - 1],
+		)
+		.map(([direction]) => direction)
+		.toSorted()
+		.join('-')
+
+	grid.tiles[grid.startIndex] = directionToTileMap[startDirections] || 'S'
+
+	return grid
+}
+
+function getAdjacentIndexes(
+	gridWidth: number,
+	index: number,
+): Record<string, number> {
+	return {
+		top: index - gridWidth,
+		right: index + 1,
+		bottom: index + gridWidth,
+		left: index - 1,
 	}
 }
 
 function getAdjoiningTileIndexes(grid: Grid, index: number): number[] {
-	const top = index - grid.width
-	const bottom = index + grid.width
-	const left = index - 1
-	const right = index + 1
+	const indexes = getAdjacentIndexes(grid.width, index)
 
-	switch (grid.tiles[index]) {
-		case '|':
-			return [top, bottom]
-		case '-':
-			return [left, right]
-		case 'L':
-			return [top, right]
-		case 'J':
-			return [left, top]
-		case '7':
-			return [left, bottom]
-		case 'F':
-			return [right, bottom]
-		case 'S':
-			return [top, right, bottom, left].filter((adjacentIndex) => {
-				return getAdjoiningTileIndexes(grid, adjacentIndex).includes(index)
-			})
-		default:
-			return []
+	const tile = grid.tiles[index]
+	if (tile === 'S') {
+		return Object.values(indexes).filter((adjacentIndex) => {
+			return getAdjoiningTileIndexes(grid, adjacentIndex).includes(index)
+		})
 	}
+
+	return (
+		tileToDirectionMap[tile]
+			?.split('-')
+			.map((rawDirection) => indexes[rawDirection]) || []
+	)
 }
 
-function getLoop(grid: Grid): number[] {
-	const indexes = new Set<number>()
-	let lastIndex: number | undefined = grid.start
+function getInnerTileIndexes(grid: Grid): number[] {
+	const indexes: number[] = []
+	for (let tileIndex = 0; tileIndex < grid.tiles.length; tileIndex++) {
+		if (grid.loop.has(tileIndex)) {
+			continue
+		}
 
-	while (lastIndex !== undefined) {
-		indexes.add(lastIndex)
-		lastIndex = getAdjoiningTileIndexes(grid, lastIndex).find(
-			(adjoiningIndex) => !indexes.has(adjoiningIndex),
-		)
+		let isInside = false
+		let rowIndex = tileIndex
+		let tile = grid.tiles[rowIndex]
+		while (tile !== '\n' && tile !== undefined) {
+			if (
+				grid.loop.has(rowIndex) &&
+				(tile === '|' || tile === 'L' || tile === 'J')
+			) {
+				isInside = !isInside
+			}
+			tile = grid.tiles[++rowIndex]
+		}
+
+		if (isInside) {
+			indexes.push(tileIndex)
+		}
 	}
-
-	return Array.from(indexes)
+	return indexes
 }
